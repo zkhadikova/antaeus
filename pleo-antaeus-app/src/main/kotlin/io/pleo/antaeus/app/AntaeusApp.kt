@@ -7,7 +7,8 @@
 
 package io.pleo.antaeus.app
 
-import getPaymentProvider
+import io.pleo.antaeus.core.external.LocalCustomerLookupService
+import io.pleo.antaeus.core.external.RandomBalancePaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -15,6 +16,7 @@ import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
+import io.pleo.antaeus.schedule.QuartzSchedulerService
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -49,19 +51,24 @@ fun main() {
     setupInitialData(dal = dal)
 
     // Get third parties
-    val paymentProvider = getPaymentProvider()
+    val paymentProvider = RandomBalancePaymentProvider(LocalCustomerLookupService)
 
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
 
-    // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+	// This is _your_ billing service to be included where you see fit
+	val billingService = BillingService(paymentProvider = paymentProvider)
 
-    // Create REST web service
-    AntaeusRest(
-        invoiceService = invoiceService,
-        customerService = customerService
-    ).run()
+	// Create REST web service
+	AntaeusRest(
+		invoiceService = invoiceService,
+		customerService = customerService
+	).run()
+
+
+	val schedulerService = QuartzSchedulerService("0 0 0 1 * ? *", invoiceService, billingService)
+	schedulerService.startScheduler()
+
 }
 

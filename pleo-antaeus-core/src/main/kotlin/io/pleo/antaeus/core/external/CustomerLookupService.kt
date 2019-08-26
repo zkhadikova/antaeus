@@ -9,12 +9,17 @@ import org.json.JSONObject
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
+import mu.KotlinLogging
+import java.io.BufferedReader
 
 interface CustomerLookupService {
 	fun getCustomer(id: Int): Customer?
 }
 
 object LocalCustomerLookupService : CustomerLookupService {
+
+	private val logger = KotlinLogging.logger {}
+
 	val baseUrl = "http://localhost:7000/rest/v1"
 
 	val mapper = jacksonObjectMapper()
@@ -23,6 +28,7 @@ object LocalCustomerLookupService : CustomerLookupService {
 		val response = try {
 			get(baseUrl + "/customers/" + id)
 		} catch (e: Exception) {
+			logger.warn(e) { "Exception while getting customer by id" }
 			throw NetworkException()
 		}
 		if (response.statusCode == 200)

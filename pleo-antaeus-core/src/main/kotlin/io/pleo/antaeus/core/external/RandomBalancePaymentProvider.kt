@@ -10,7 +10,6 @@ class RandomBalancePaymentProvider(val customerLookupService: CustomerLookupServ
 	
 	override fun charge(invoice: Invoice): Boolean {
 		val customer = customerLookupService.getCustomer(invoice.customerId)
-		println(customer)
 		if(customer?.currency != invoice.amount.currency)
 			throw CurrencyMismatchException(invoice.id, customer!!.id)
 		if(getCustomerBalance(customer).compareTo(invoice.amount.value) >= 0)
