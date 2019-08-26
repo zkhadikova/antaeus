@@ -9,7 +9,6 @@ import org.quartz.impl.StdSchedulerFactory
 
 class QuartzSchedulerService(
 	val cronExpression: String,
-	val invoiceService: InvoiceService,
 	val billingService: BillingService
 ) {
 	val trigger = TriggerBuilder
@@ -26,7 +25,6 @@ class QuartzSchedulerService(
 	val scheduler = StdSchedulerFactory().getScheduler()
 
 	fun startScheduler(): Unit {
-		scheduler.getContext().put("invoiceService", invoiceService)
 		scheduler.getContext().put("billingService", billingService)
 
 		scheduler.start()
