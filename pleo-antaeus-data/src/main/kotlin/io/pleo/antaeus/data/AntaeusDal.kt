@@ -112,14 +112,14 @@ class AntaeusDal(private val db: Database) {
 	}
 
 	fun createInvoiceTransaction(
-		invoice: Invoice,
+		invoiceId: Int,
 		status: ProcessingStatus
 	): InvoiceTransaction? {
 		val id = transaction(db) {
 			// Insert the invoice and returns its new id.
 			InvoiceTransactionTable
 				.insert {
-					it[this.invoiceId] = invoice.id
+					it[this.invoiceId] = invoiceId
 					it[this.status] = status.toString()
 					it[this.transactionDate] = DateTime.now()
 				} get InvoiceTransactionTable.id

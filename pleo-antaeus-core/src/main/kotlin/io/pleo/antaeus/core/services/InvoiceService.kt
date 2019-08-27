@@ -23,11 +23,11 @@ class InvoiceService(private val dal: AntaeusDal) {
 		return dal.fetchInvoicesByStatus(InvoiceStatus.PENDING)
 	}
 
-    fun updateStatus(id: Int, status: InvoiceStatus): Unit {
-        dal.updateInvoiceStatus(id, status)
+    fun updatePaidInvoice(id: Int): Unit {
+        dal.updateInvoiceStatus(id, InvoiceStatus.PAID)
     }
 	
-    fun recordInvoiceTransaction(invoice: Invoice, status: ProcessingStatus): Unit {
-        dal.createInvoiceTransaction(invoice, status)
+    fun recordInvoiceTransaction(invoiceId: Int, status: ProcessingStatus): Unit {
+        dal.createInvoiceTransaction(invoiceId, status)
     }
 }

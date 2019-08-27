@@ -27,14 +27,20 @@ There are 2 options for running Anteus. You either need libsqlite3 or docker. Do
 Install docker for your platform
 
 ```
-make docker-run
+./docker-start.sh
+```
+
+Clen up docker image
+
+```
+./docker-clean.sh
 ```
 
 *Running Natively*
 
 Native java with sqlite (requires libsqlite3):
 
-If you use homebrew on MacOS `brew install sqlite`.
+If you use homebrew on MacOS `brew install sqlxite`.
 
 ```
 ./gradlew run
@@ -66,10 +72,12 @@ The code given is structured as follows.
 
 2 Mock external payment system: 
 
-* check if customer exists using local REST API 
+* check if customer exists using local REST API to mimic customer verification
 * return random value as account balance 
 
 3 Add transaction log for invoice processing 
+
+4 Try using Kotlin coroutines to process invoices in parallel
 
 ### Main Libraries and dependencies
 * [Exposed](https://github.com/JetBrains/Exposed) - DSL for type-safe SQL

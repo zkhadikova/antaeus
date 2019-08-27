@@ -1,11 +1,17 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
+import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
+import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.ProcessingStatus
-import io.pleo.antaeus.core.exceptions.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+
 
 class BillingService(
 	private val paymentProvider: PaymentProvider,
@@ -13,32 +19,43 @@ class BillingService(
 ) {
 	private val logger = KotlinLogging.logger {}
 
-	fun processInvoice(invoice: Invoice): Boolean {
-		try {
-			logger.trace { "Processing invoice $invoice" }
-			return paymentProvider.charge(invoice)
+	fun processInvoice(invoice: Invoice): Pair<Int, ProcessingStatus> {
+		val status = try {
+			logger.info { "Processing invoice $invoice" }
+			val paid = paymentProvider.charge(invoice)
+			if (paid) {
+				ProcessingStatus.SUCCESS
+			} else ProcessingStatus.OVERDRAFT
 		} catch (e: CurrencyMismatchException) {
-			invoiceService.recordInvoiceTransaction(invoice, ProcessingStatus.CURRENCY_MISMATCH)
-			return false
+			ProcessingStatus.CURRENCY_MISMATCH
 		} catch (e: CustomerNotFoundException) {
-			invoiceService.recordInvoiceTransaction(invoice, ProcessingStatus.CUSTOMER_NOT_FOUND)
-			return false
+			ProcessingStatus.CUSTOMER_NOT_FOUND
 		} catch (e: NetworkException) {
-			invoiceService.recordInvoiceTransaction(invoice, ProcessingStatus.NETWORK_ERROR)
-			return false
+			ProcessingStatus.NETWORK_ERROR
 		} catch (e: Exception) {
 			logger.error(e) { "Unexpected exception" }
-			return false
+			ProcessingStatus.UNKNOWN_ERROR
 		}
+		return Pair(invoice.id, status)
 	}
 
 	fun processPayments(): Unit {
+		val context = newFixedThreadPoolContext(5, "antaeus-payment-system")
+
 		val pendingInvoices = invoiceService.fetchPendingInvoices()
-		pendingInvoices.forEach { invoice ->
-			val paid = processInvoice(invoice)
-			if (paid) {
-				invoiceService.updateStatus(invoice.id, InvoiceStatus.PAID)
-				invoiceService.recordInvoiceTransaction(invoice, ProcessingStatus.SUCCESS)
+		val deferred = pendingInvoices.map { invoice ->
+			CoroutineScope(context).async {
+				processInvoice(invoice)
+			}
+		}
+		runBlocking {
+			deferred.forEach {
+				it.await()
+				val (id, status) = it.getCompleted()
+				invoiceService.recordInvoiceTransaction(id, status)
+				if (status == ProcessingStatus.SUCCESS) {
+					invoiceService.updatePaidInvoice(id)
+				}
 			}
 		}
 	}
