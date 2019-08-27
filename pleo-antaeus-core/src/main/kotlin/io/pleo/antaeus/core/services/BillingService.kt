@@ -14,49 +14,49 @@ import mu.KotlinLogging
 
 
 class BillingService(
-	private val paymentProvider: PaymentProvider,
-	private val invoiceService: InvoiceService
+    private val paymentProvider: PaymentProvider,
+    private val invoiceService: InvoiceService
 ) {
-	private val logger = KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
 
-	fun processInvoice(invoice: Invoice): Pair<Int, ProcessingStatus> {
-		val status = try {
-			logger.info { "Processing invoice $invoice" }
-			val paid = paymentProvider.charge(invoice)
-			if (paid) {
-				ProcessingStatus.SUCCESS
-			} else ProcessingStatus.OVERDRAFT
-		} catch (e: CurrencyMismatchException) {
-			ProcessingStatus.CURRENCY_MISMATCH
-		} catch (e: CustomerNotFoundException) {
-			ProcessingStatus.CUSTOMER_NOT_FOUND
-		} catch (e: NetworkException) {
-			ProcessingStatus.NETWORK_ERROR
-		} catch (e: Exception) {
-			logger.error(e) { "Unexpected exception" }
-			ProcessingStatus.UNKNOWN_ERROR
-		}
-		return Pair(invoice.id, status)
-	}
+    fun processInvoice(invoice: Invoice): Pair<Int, ProcessingStatus> {
+        val status = try {
+            logger.info { "Processing invoice $invoice" }
+            val paid = paymentProvider.charge(invoice)
+            if (paid) {
+                ProcessingStatus.SUCCESS
+            } else ProcessingStatus.OVERDRAFT
+        } catch (e: CurrencyMismatchException) {
+            ProcessingStatus.CURRENCY_MISMATCH
+        } catch (e: CustomerNotFoundException) {
+            ProcessingStatus.CUSTOMER_NOT_FOUND
+        } catch (e: NetworkException) {
+            ProcessingStatus.NETWORK_ERROR
+        } catch (e: Exception) {
+            logger.error(e) { "Unexpected exception" }
+            ProcessingStatus.UNKNOWN_ERROR
+        }
+        return Pair(invoice.id, status)
+    }
 
-	fun processPayments(): Unit {
-		val context = newFixedThreadPoolContext(5, "antaeus-payment-system")
+    fun processPayments(): Unit {
+        val context = newFixedThreadPoolContext(5, "antaeus-payment-system")
 
-		val pendingInvoices = invoiceService.fetchPendingInvoices()
-		val deferred = pendingInvoices.map { invoice ->
-			CoroutineScope(context).async {
-				processInvoice(invoice)
-			}
-		}
-		runBlocking {
-			deferred.forEach {
-				it.await()
-				val (id, status) = it.getCompleted()
-				invoiceService.recordInvoiceTransaction(id, status)
-				if (status == ProcessingStatus.SUCCESS) {
-					invoiceService.updatePaidInvoice(id)
-				}
-			}
-		}
-	}
+        val pendingInvoices = invoiceService.fetchPendingInvoices()
+        val deferred = pendingInvoices.map { invoice ->
+            CoroutineScope(context).async {
+                processInvoice(invoice)
+            }
+        }
+        runBlocking {
+            deferred.forEach {
+                it.await()
+                val (id, status) = it.getCompleted()
+                invoiceService.recordInvoiceTransaction(id, status)
+                if (status == ProcessingStatus.SUCCESS) {
+                    invoiceService.updatePaidInvoice(id)
+                }
+            }
+        }
+    }
 }

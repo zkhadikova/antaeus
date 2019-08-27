@@ -31,7 +31,7 @@ fun ResultRow.toCustomer(): Customer = Customer(
 
 fun ResultRow.toInvoiceTransaction(): InvoiceTransaction = InvoiceTransaction(
     id = this[InvoiceTransactionTable.id],
-	invoiceId = this[InvoiceTransactionTable.invoiceId],
+    invoiceId = this[InvoiceTransactionTable.invoiceId],
     status = ProcessingStatus.valueOf(this[InvoiceTransactionTable.status]),
     transactionDate = this[InvoiceTransactionTable.transactionDate]
 )

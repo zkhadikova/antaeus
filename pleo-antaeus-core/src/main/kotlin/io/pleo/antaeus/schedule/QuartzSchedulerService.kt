@@ -8,31 +8,31 @@ import org.quartz.TriggerBuilder
 import org.quartz.impl.StdSchedulerFactory
 
 class QuartzSchedulerService(
-	val cronExpression: String,
-	val billingService: BillingService
+    val cronExpression: String,
+    val billingService: BillingService
 ) {
-	val trigger = TriggerBuilder
-		.newTrigger()
-		.withIdentity("antaeus-payment-trg", "antaeus-group")
-		.withSchedule(
-			CronScheduleBuilder.cronSchedule(cronExpression)
-		)
-		.build()
+    val trigger = TriggerBuilder
+        .newTrigger()
+        .withIdentity("antaeus-payment-trg", "antaeus-group")
+        .withSchedule(
+            CronScheduleBuilder.cronSchedule(cronExpression)
+        )
+        .build()
 
-	val job = JobBuilder.newJob(PaymentJob::class.java)
-		.withIdentity("antaeus-payment-job", "antaeus-group").build()
+    val job = JobBuilder.newJob(PaymentJob::class.java)
+        .withIdentity("antaeus-payment-job", "antaeus-group").build()
 
-	val scheduler = StdSchedulerFactory().getScheduler()
+    val scheduler = StdSchedulerFactory().getScheduler()
 
-	fun startScheduler(): Unit {
-		scheduler.getContext().put("billingService", billingService)
+    fun startScheduler(): Unit {
+        scheduler.getContext().put("billingService", billingService)
 
-		scheduler.start()
-		scheduler.scheduleJob(job, trigger)
-	}
+        scheduler.start()
+        scheduler.scheduleJob(job, trigger)
+    }
 
-	fun stop(): Unit {
-		scheduler.shutdown()
-	}
+    fun stop(): Unit {
+        scheduler.shutdown()
+    }
 
 }

@@ -6,18 +6,18 @@ import org.quartz.Job
 import org.quartz.JobExecutionContext
 
 class PaymentJob : Job {
-	private val logger = KotlinLogging.logger {}
-	override fun execute(context: JobExecutionContext): Unit {
-		logger.info { "Triggred payment processing" }
+    private val logger = KotlinLogging.logger {}
+    override fun execute(context: JobExecutionContext): Unit {
+        logger.info { "Triggred payment processing" }
 
-		val schedulerContext = context.getScheduler().getContext()
+        val schedulerContext = context.getScheduler().getContext()
 
-		val billingServiceParam = schedulerContext.get("billingService")
+        val billingServiceParam = schedulerContext.get("billingService")
 
-		val billingService = when (billingServiceParam) {
-			is BillingService -> billingServiceParam
-			else -> throw IllegalArgumentException("Invalid job param billingService")
-		}
-		billingService.processPayments()
-	}
+        val billingService = when (billingServiceParam) {
+            is BillingService -> billingServiceParam
+            else -> throw IllegalArgumentException("Invalid job param billingService")
+        }
+        billingService.processPayments()
+    }
 }

@@ -58,19 +58,18 @@ fun main() {
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
 
-	// This is _your_ billing service to be included where you see fit
-	val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
+    // This is _your_ billing service to be included where you see fit
+    val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
-	// Create REST web service
-	AntaeusRest(
-		invoiceService = invoiceService,
-		customerService = customerService
-	).run()
+    // Create REST web service
+    AntaeusRest(
+        invoiceService = invoiceService,
+        customerService = customerService
+    ).run()
 
 
-	val schedulerService = QuartzSchedulerService("0 0 0 1 * ? *", billingService)
-	
-	schedulerService.startScheduler()
+    val schedulerService = QuartzSchedulerService("0 0 0 1 * ? *", billingService)
+    schedulerService.startScheduler()
 
 }
 

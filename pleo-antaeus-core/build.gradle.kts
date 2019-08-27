@@ -6,9 +6,9 @@ kotlinProject()
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0")
-	implementation("org.quartz-scheduler:quartz:2.3.1")
-	implementation("khttp:khttp:0.1.0")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
+    implementation("org.quartz-scheduler:quartz:2.3.1")
+    implementation("khttp:khttp:0.1.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
     implementation(project(":pleo-antaeus-data"))
     compile(project(":pleo-antaeus-models"))
 }
